@@ -128,7 +128,7 @@ function render(dir){
   c.className = 'card'; c.tabIndex = 0;
   const last = i === msgs.length - 1;
   c.innerHTML = LILY + CAP + '<img class="snoopy" src="snoopy.png" alt="" draggable="false">' + '<p class="msg"></p>' +
-    (last ? '<div class="sign">Te quiere mucho, Aley</div><button class="rain primary" id="rainBtn" type="button">Ver la lluvia otra vez 🥳</button>' : '') +
+    (last ? '<div class="sign">Te quiere mucho, Aley</div><button class="rain primary" id="rainBtn" type="button">¡Que caigan más flores! 🌸</button>' : '') +
     '<span class="num">' + (i+1) + ' / ' + msgs.length + '</span>';
   c.querySelector('.msg').textContent = msgs[i];
   c.style.transform = 'rotate(' + (i%2 ? 1.5 : -1.5) + 'deg)';
