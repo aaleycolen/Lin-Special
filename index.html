@@ -41,6 +41,7 @@ header p{margin:.25rem 0 0;color:var(--soft);font-size:.95rem}
   padding:28px 26px;box-sizing:border-box;touch-action:pan-y;user-select:none;cursor:grab;
   transition:transform .35s ease,opacity .35s ease}
 .card.dragging{transition:none;cursor:grabbing}
+.card .snoopy{position:absolute;bottom:-18px;left:-16px;width:78px;height:auto;transform:rotate(-6deg);pointer-events:none;filter:drop-shadow(0 2px 3px var(--shadow))}
 .card .lily{position:absolute;top:-26px;left:-14px;width:64px;height:64px;transform:rotate(-18deg)}
 .lily .p{fill:var(--petal);stroke:var(--petal-line);stroke-width:1.2}
 .lily .s{stroke:var(--accent);stroke-width:1.4;fill:none}
@@ -126,7 +127,7 @@ function render(dir){
   const c = document.createElement('div');
   c.className = 'card'; c.tabIndex = 0;
   const last = i === msgs.length - 1;
-  c.innerHTML = LILY + CAP + '<p class="msg"></p>' +
+  c.innerHTML = LILY + CAP + '<img class="snoopy" src="snoopy.png" alt="" draggable="false">' + '<p class="msg"></p>' +
     (last ? '<div class="sign">Te quiere mucho, Aley</div><button class="rain primary" id="rainBtn" type="button">Ver la lluvia otra vez 🥳</button>' : '') +
     '<span class="num">' + (i+1) + ' / ' + msgs.length + '</span>';
   c.querySelector('.msg').textContent = msgs[i];
