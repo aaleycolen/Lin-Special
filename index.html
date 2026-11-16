@@ -38,7 +38,7 @@ header p{margin:.25rem 0 0;color:var(--soft);font-size:.95rem}
 .stack{position:relative;width:min(100% - 28px,22rem);aspect-ratio:3/4;max-width:100%;margin-top:22px}
 .card{position:absolute;inset:0;background:var(--card);border:1px solid var(--edge);border-radius:14px;
   box-shadow:0 10px 24px var(--shadow);display:flex;flex-direction:column;justify-content:center;
-  padding:28px 26px;box-sizing:border-box;touch-action:pan-y;user-select:none;cursor:grab;
+  padding:28px 26px;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;
   transition:transform .35s ease,opacity .35s ease}
 .card.dragging{transition:none;cursor:grabbing}
 .card .snoopy{position:absolute;bottom:-18px;left:-16px;width:78px;height:auto;transform:rotate(-6deg);pointer-events:none;filter:drop-shadow(0 2px 3px var(--shadow))}
@@ -183,21 +183,37 @@ function go(step){
 }
 
 function attachSwipe(c){
-  let x0 = null, dx = 0;
-  c.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; c.classList.add('dragging'); c.setPointerCapture(e.pointerId); });
-  c.addEventListener('pointermove', e => {
-    if (x0 === null) return;
-    dx = e.clientX - x0;
+  // En celular se usan eventos táctiles: en cuanto el gesto es horizontal se bloquea el scroll
+  // para que Safari (iPhone) no cancele el arrastre. En compu se usa el mouse.
+  let x0 = null, y0 = 0, dx = 0, t0 = 0, axis = null;
+  const start = (x, y) => { x0 = x; y0 = y; dx = 0; t0 = performance.now(); axis = null; c.classList.add('dragging'); };
+  const move = (x, y) => {
+    if (x0 === null) return false;
+    const mx = x - x0, my = y - y0;
+    if (!axis) {
+      if (Math.abs(mx) < 6 && Math.abs(my) < 6) return false;
+      axis = Math.abs(mx) > Math.abs(my) ? 'x' : 'y';
+      if (axis === 'y') { x0 = null; c.classList.remove('dragging'); return false; }
+    }
+    dx = mx;
     c.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx/18) + 'deg)';
-  });
+    return true;
+  };
   const end = () => {
     if (x0 === null) return;
     c.classList.remove('dragging'); x0 = null;
-    if (Math.abs(dx) > 70) go(dx > 0 ? 1 : -1);
+    const speed = Math.abs(dx) / Math.max(1, performance.now() - t0);
+    if (Math.abs(dx) > Math.min(70, c.offsetWidth * 0.22) || (Math.abs(dx) > 30 && speed > 0.35)) go(dx > 0 ? 1 : -1);
     else c.style.transform = 'rotate(' + (i%2 ? 1.5 : -1.5) + 'deg)';
   };
-  c.addEventListener('pointerup', end);
-  c.addEventListener('pointercancel', end);
+  c.addEventListener('touchstart', e => { if (e.touches.length === 1) start(e.touches[0].clientX, e.touches[0].clientY); }, {passive:true});
+  c.addEventListener('touchmove', e => { if (move(e.touches[0].clientX, e.touches[0].clientY)) e.preventDefault(); }, {passive:false});
+  c.addEventListener('touchend', end);
+  c.addEventListener('touchcancel', end);
+  c.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') return; start(e.clientX, e.clientY); c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') move(e.clientX, e.clientY); });
+  c.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') end(); });
+  c.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') end(); });
   c.addEventListener('keydown', e => { if (e.key==='ArrowRight') go(1); if (e.key==='ArrowLeft') go(-1); });
 }
 
