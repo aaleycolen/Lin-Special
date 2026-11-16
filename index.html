@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notitas para Lin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Nunito:wght@400;600;700&display=swap">
+<style>
+/* Layout: una sola pila de notitas al centro, deslizables; contador y botones debajo */
+:root{
+  --bg:#e8eef6; --ink:#1d2a3d; --soft:#5b6b82; --card:#fffdf6; --edge:#d6deea;
+  --accent:#f2b632; --accent-ink:#1d2a3d; --shadow:rgba(29,42,61,.16);
+  --petal:#ffffff; --petal-line:#b6c1d2; --leaf:#6e9a6b;
+  --cap:#1f2f55; --cap-line:#14203d; --visor:#c8323a; --visor-line:#9e2229; --gold:#e3b43c;
+  --hand:"Kalam","Comic Sans MS",cursive; --body:"Nunito",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121a26; --ink:#eef2f8; --soft:#9aa9bf; --card:#1e2a3b; --edge:#2c3a50;
+  --accent:#f4c24f; --accent-ink:#121a26; --shadow:rgba(0,0,0,.45); --petal:#f4f6fa; --petal-line:#7c8ba3; --leaf:#7fae7b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121a26; --ink:#eef2f8; --soft:#9aa9bf; --card:#1e2a3b; --edge:#2c3a50;
+  --accent:#f4c24f; --accent-ink:#121a26; --shadow:rgba(0,0,0,.45); --petal:#f4f6fa; --petal-line:#7c8ba3; --leaf:#7fae7b; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:18px;overflow-x:hidden}
+header{text-align:center;max-width:30rem}
+h1{font-family:var(--hand);font-weight:700;font-size:2rem;margin:0;text-wrap:balance}
+header p{margin:.25rem 0 0;color:var(--soft);font-size:.95rem}
+.cap{display:block;margin:0 auto 4px;width:84px;height:64px}
+.card .cap{position:absolute;top:-22px;right:-14px;width:72px;height:56px;margin:0;transform:rotate(14deg)}
+.cap .crown{fill:var(--cap);stroke:var(--cap-line);stroke-width:1.5}
+.cap .seam{stroke:var(--cap-line);stroke-width:1.2;fill:none;opacity:.7}
+.cap .btn{fill:var(--visor)}
+.cap .visor{fill:var(--visor);stroke:var(--visor-line);stroke-width:1.5}
+.cap .star{fill:var(--gold)}
+.cap .ring{fill:none;stroke:var(--gold);stroke-width:1.6}
+.stack{position:relative;width:min(100% - 28px,22rem);aspect-ratio:3/4;max-width:100%;margin-top:22px}
+.card{position:absolute;inset:0;background:var(--card);border:1px solid var(--edge);border-radius:14px;
+  box-shadow:0 10px 24px var(--shadow);display:flex;flex-direction:column;justify-content:center;
+  padding:28px 26px;box-sizing:border-box;touch-action:pan-y;user-select:none;cursor:grab;
+  transition:transform .35s ease,opacity .35s ease}
+.card.dragging{transition:none;cursor:grabbing}
+.card .lily{position:absolute;top:-26px;left:-14px;width:64px;height:64px;transform:rotate(-18deg)}
+.lily .p{fill:var(--petal);stroke:var(--petal-line);stroke-width:1.2}
+.lily .s{stroke:var(--accent);stroke-width:1.4;fill:none}
+.lily .st{stroke:var(--leaf);stroke-width:2.5;fill:none}
+.lily .lf{fill:var(--leaf)}
+.card .msg{font-family:var(--hand);font-size:1.45rem;line-height:1.35;margin:0;text-wrap:pretty}
+.card .sign{margin-top:18px;font-family:var(--hand);color:var(--soft);font-size:1.05rem}
+.card .num{position:absolute;bottom:14px;right:18px;font-size:.8rem;color:var(--soft);font-variant-numeric:tabular-nums}
+.hint{color:var(--soft);font-size:.85rem;margin:0}
+.controls{display:flex;gap:10px;align-items:center}
+button{font-family:var(--body);font-weight:700;font-size:.95rem;border-radius:999px;padding:10px 18px;
+  border:1px solid var(--edge);background:var(--card);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+.dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:20rem}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--edge)}
+.dot.on{background:var(--accent)}
+.card .rain{margin-top:18px;align-self:flex-start;font-size:.9rem;padding:8px 14px}
+#petals{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.fall.logo{border-radius:50%;object-fit:cover;box-shadow:0 2px 6px var(--shadow)}
+.fall{position:absolute;top:-70px;width:36px;height:36px;opacity:.95;animation:fall linear forwards}
+@keyframes fall{
+  0%{transform:translate(0,0) rotate(0deg);opacity:0}
+  10%{opacity:.95}
+  50%{transform:translate(var(--drift),55vh) rotate(var(--spin))}
+  100%{transform:translate(0,115vh) rotate(calc(var(--spin) * 2));opacity:.85}
+}
+@media (prefers-reduced-motion: reduce){.card{transition:none}#petals{display:none}}
+</head>
+<body>
+</style>
+
+<header>
+  <h1>Para ti, Lin</h1>
+</header>
+
+<div id="petals" aria-hidden="true"></div>
+<div class="stack" id="stack" aria-live="polite"></div>
+<p class="hint">Desliza la notita hacia un lado →</p>
+<div class="dots" id="dots"></div>
+<div class="controls">
+  <button id="prev">Atrás</button>
+  <button id="next" class="primary">Siguiente</button>
+</div>
+
+<script>
+const msgs = [
+  "Ha sido un camino difícil, Lin. Más de lo que mucha gente se imagina.",
+  "Hubo semanas sin celular, operativos, órdenes, desvelos y un cansancio que no se le desea a nadie.",
+  "Hubo días en que solo querías dormir. Noches en que te dolía el cuerpo, y otras en que te dolía algo más por dentro.",
+  "Y aun así, nunca te quedaste en el suelo. Te levantabas al día siguiente y seguías.",
+  "Poco a poco, todo ese esfuerzo empezó a convertirse en algo: en disciplina, en fuerza, en una versión de ti más segura.",
+  "Hoy ya no eres la misma que entró a la academia. Eres alguien que sabe de lo que es capaz.",
+  "Lo que viene también va a ser pesado, pero ahora sabes algo que antes no: que puedes con más de lo que creías.",
+  "Vienen tus metas, tus estudios, viajar por el mundo, cuidar de tu mami. Todo va a ir llegando, a su tiempo.",
+  "Y en los días pesados que todavía faltan, acuérdate de este camino. Ya lo recorriste una vez. Lo vas a volver a hacer.",
+  "Estoy muy orgulloso de ti, Lin. De dónde empezaste, de dónde estás y de todo lo que vas a lograr. 🫶"
+];
+const stack = document.getElementById('stack'), dots = document.getElementById('dots');
+const prevB = document.getElementById('prev'), nextB = document.getElementById('next');
+let i = 0;
+const LILY = '<svg class="lily" viewBox="0 0 64 64" aria-hidden="true">' +
+  '<path class="st" d="M32 40 Q33 52 31 63"/>' +
+  '<path class="lf" d="M32 54 Q40 46 46 50 Q40 56 32 54Z"/>' +
+  [-68,-34,0,34,68].map(a => '<path class="p" transform="rotate(' + a + ' 32 40)" d="M32 40 C25 31 25 15 32 5 C39 15 39 31 32 40Z"/>').join('') +
+  '<path class="s" d="M32 40 L28 24 M32 40 L32 22 M32 40 L36 24"/>' +
+  '</svg>';
+
+const CAP = '<svg class="cap" viewBox="0 0 84 64" aria-hidden="true">' +
+  '<path class="visor" d="M30 44 Q52 40 80 50 Q76 58 58 58 Q40 57 30 50Z"/>' +
+  '<path class="crown" d="M8 46 Q8 14 36 10 Q60 10 64 40 Q50 46 30 47 Q16 48 8 46Z"/>' +
+  '<path class="seam" d="M36 10 Q38 28 34 46 M36 10 Q22 22 18 46"/>' +
+  '<circle class="btn" cx="36" cy="10" r="2.6"/>' +
+  '<circle class="ring" cx="44" cy="28" r="9"/>' +
+  '<path class="star" d="M44 21.5 L46 26 L50.8 26.3 L47.1 29.3 L48.3 34 L44 31.4 L39.7 34 L40.9 29.3 L37.2 26.3 L42 26Z"/>' +
+  '</svg>';
+
+msgs.forEach(() => { const d = document.createElement('span'); d.className='dot'; dots.appendChild(d); });
+
+function render(dir){
+  stack.innerHTML = '';
+  const c = document.createElement('div');
+  c.className = 'card'; c.tabIndex = 0;
+  const last = i === msgs.length - 1;
+  c.innerHTML = LILY + CAP + '<p class="msg"></p>' +
+    (last ? '<div class="sign">Te quiere mucho, Aley</div><button class="rain primary" id="rainBtn" type="button">Ver la lluvia otra vez 🥳</button>' : '') +
+    '<span class="num">' + (i+1) + ' / ' + msgs.length + '</span>';
+  c.querySelector('.msg').textContent = msgs[i];
+  c.style.transform = 'rotate(' + (i%2 ? 1.5 : -1.5) + 'deg)';
+  if (dir) { c.style.opacity = 0; c.style.transform = 'translateX(' + (dir*60) + 'px)'; }
+  stack.appendChild(c);
+  if (dir) requestAnimationFrame(() => requestAnimationFrame(() => {
+    c.style.opacity = 1; c.style.transform = 'rotate(' + (i%2 ? 1.5 : -1.5) + 'deg)';
+  }));
+  [...dots.children].forEach((d,k) => d.classList.toggle('on', k === i));
+  prevB.disabled = i === 0;
+  nextB.textContent = last ? 'Volver al inicio' : 'Siguiente';
+  attachSwipe(c);
+  if (last) {
+    const rb = c.querySelector('#rainBtn');
+    rb.addEventListener('pointerdown', e => e.stopPropagation());
+    rb.addEventListener('click', e => { e.stopPropagation(); celebrate(); });
+    celebrate();
+  }
+}
+
+function celebrate(){
+  const box = document.getElementById('petals');
+  box.innerHTML = '';
+  const STAR = '<svg viewBox="0 0 24 24"><path fill="#e3b43c" d="M12 1.5 L14.9 8.6 L22.5 9.1 L16.6 14 L18.5 21.5 L12 17.4 L5.5 21.5 L7.4 14 L1.4 9.1 L9.1 8.6Z"/></svg>';
+  for (let k = 0; k < 32; k++) {
+    const w = document.createElement('div');
+    const kind = k % 4;
+    w.innerHTML = kind === 0 ? LILY : kind === 1 ? STAR : kind === 2 ? '<span>🥳</span>' : '<img class="logo" src="images.jpg" alt="">';
+    const s = w.firstChild;
+    s.classList.add('fall');
+    if (kind === 2) { s.style.lineHeight = '1'; s.style.textAlign = 'center'; }
+    s.style.left = (Math.random() * 92) + '%';
+    const size = 26 + Math.random() * 22;
+    s.style.width = s.style.height = size + 'px';
+    if (kind === 2) s.style.fontSize = (size * 0.85) + 'px';
+    s.style.animationDuration = (6 + Math.random() * 4) + 's';
+    s.style.animationDelay = (Math.random() * 3.5) + 's';
+    s.style.setProperty('--drift', (Math.random() * 80 - 40) + 'px');
+    s.style.setProperty('--spin', (Math.random() * 120 - 60) + 'deg');
+    box.appendChild(s);
+  }
+  setTimeout(() => { box.innerHTML = ''; }, 14000);
+}
+
+function go(step){
+  const card = stack.firstChild;
+  let n = i + step;
+  if (n >= msgs.length) n = 0;
+  if (n < 0) return;
+  if (card) { card.style.transform = 'translateX(' + (-step*120) + '%) rotate(' + (-step*12) + 'deg)'; card.style.opacity = 0; }
+  setTimeout(() => { i = n; render(step); }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
+}
+
+function attachSwipe(c){
+  let x0 = null, dx = 0;
+  c.addEventListener('pointerdown', e => { x0 = e.clientX; dx = 0; c.classList.add('dragging'); c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', e => {
+    if (x0 === null) return;
+    dx = e.clientX - x0;
+    c.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx/18) + 'deg)';
+  });
+  const end = () => {
+    if (x0 === null) return;
+    c.classList.remove('dragging'); x0 = null;
+    if (Math.abs(dx) > 70) go(dx > 0 ? 1 : -1);
+    else c.style.transform = 'rotate(' + (i%2 ? 1.5 : -1.5) + 'deg)';
+  };
+  c.addEventListener('pointerup', end);
+  c.addEventListener('pointercancel', end);
+  c.addEventListener('keydown', e => { if (e.key==='ArrowRight') go(1); if (e.key==='ArrowLeft') go(-1); });
+}
+
+prevB.addEventListener('click', () => go(-1));
+nextB.addEventListener('click', () => go(1));
+render(0);
+</script>
+</body>
+</html>
